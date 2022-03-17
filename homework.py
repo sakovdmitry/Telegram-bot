@@ -26,7 +26,7 @@ class ResponseStatusIsNotOk(Exception):
 
 
 class ResponseKeyError(Exception):
-    """Исключение для некорректного ответа API"""
+    """Исключение для некорректного ответа API."""
 
     pass
 
