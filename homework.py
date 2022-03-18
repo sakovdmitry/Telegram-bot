@@ -1,34 +1,15 @@
 import logging
+import sys
 import time
 from http import HTTPStatus
 
 import requests
 import telegram
 
-from config import PRACTICUM_TOKEN, TELEGRAM_CHAT_ID, TELEGRAM_TOKEN
-
-RETRY_TIME = 600
-ENDPOINT = 'https://practicum.yandex.ru/api/user_api/homework_statuses/'
-HEADERS = {'Authorization': f'OAuth {PRACTICUM_TOKEN}'}
-
-
-HOMEWORK_STATUSES = {
-    'approved': 'Работа проверена: ревьюеру всё понравилось. Ура!',
-    'reviewing': 'Работа взята на проверку ревьюером.',
-    'rejected': 'Работа проверена: у ревьюера есть замечания.'
-}
-
-
-class ResponseStatusIsNotOk(Exception):
-    """Исключение для статуса ответа API != 200."""
-
-    pass
-
-
-class ResponseKeyError(Exception):
-    """Исключение для некорректного ответа API."""
-
-    pass
+from config import (ENDPOINT, HEADERS, HOMEWORK_STATUSES, PRACTICUM_TOKEN,
+                    RETRY_TIME, TELEGRAM_CHAT_ID, TELEGRAM_TOKEN)
+from exceptions import (ResponseKeyError, ResponseStatusIsNotOk,
+                        TelegramUnavailable)
 
 
 def send_message(bot, message):
@@ -39,6 +20,9 @@ def send_message(bot, message):
     except telegram.TelegramError as error:
         logging.error('Cбой при отправке сообщения')
         raise telegram.TelegramError(error)
+    except TelegramUnavailable as error:
+        logging.error('Telegram недоступен')
+        raise TelegramUnavailable(error)
 
 
 def get_api_answer(current_timestamp):
@@ -95,7 +79,7 @@ def main():
     """Основная логика работы бота."""
     if check_tokens() is False:
         logging.critical('Отсутствует переменная окружения: {token}')
-        raise Exception('Отсутсвует один из токенов')
+        sys.exit('Отсутсвует один из токенов')
     else:
         logging.info('Проверка переменных окружения успешно пройдена')
     bot = telegram.Bot(token=TELEGRAM_TOKEN)
